@@ -1,0 +1,321 @@
+-- =============================================
+-- WELCOME MESSAGE
+-- =============================================
+local function ShowWelcomeMessage()
+    local player = game.Players.LocalPlayer
+    local welcomeGui = Instance.new("ScreenGui")
+    welcomeGui.Name = "WelcomeMessage"
+    welcomeGui.ResetOnSpawn = false
+    welcomeGui.Parent = player:WaitForChild("PlayerGui")
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 340, 0, 95)
+    frame.Position = UDim2.new(0.5, -170, 0.12, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(3, 3, 6)
+    frame.BackgroundTransparency = 0.05
+    frame.BorderSizePixel = 0
+    frame.Parent = welcomeGui
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 16)
+    corner.Parent = frame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(45, 45, 50)
+    stroke.Thickness = 1
+    stroke.Parent = frame
+
+    local glow = Instance.new("UIStroke")
+    glow.Color = Color3.fromRGB(70, 70, 80)
+    glow.Thickness = 4
+    glow.Transparency = 0.88
+    glow.Parent = frame
+
+    local text = Instance.new("TextLabel")
+    text.Size = UDim2.new(1, -20, 1, -20)
+    text.Position = UDim2.new(0, 10, 0, 10)
+    text.BackgroundTransparency = 1
+    text.Text = "Made by CLARA"
+    text.TextColor3 = Color3.fromRGB(235, 235, 245)
+    text.Font = Enum.Font.GothamBlack
+    text.TextSize = 27
+    text.TextStrokeTransparency = 0.75
+    text.TextStrokeColor3 = Color3.fromRGB(30, 30, 35)
+    text.Parent = frame
+
+    task.delay(3, function()
+        for i = 1, 20 do
+            frame.BackgroundTransparency += 0.05
+            text.TextTransparency += 0.055
+            text.TextStrokeTransparency += 0.055
+            task.wait(0.035)
+        end
+        welcomeGui:Destroy()
+    end)
+end
+ShowWelcomeMessage()
+
+-- =============================================
+-- ESP + AIMBOT (com Lock no Alvo)
+-- =============================================
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+local tracked = {}
+local espEnabled = true
+
+-- ==================== AIMBOT SETTINGS ====================
+local aimbotEnabled = false
+local currentTarget = nil   -- Agora guarda o alvo fixo
+
+local AIMBOT_SETTINGS = {
+    ToggleKey = Enum.KeyCode.K,
+    FOV = 90,
+    Smoothness = 0.35,      -- Diminuí um pouco para ficar mais fluido
+    MaxDistance = 800,
+    Prediction = 0.14
+}
+
+-- ==================== FUNÇÃO MD ====================
+local function GetMD(player)
+    local char = player.Character
+    if not char then return 0 end
+    local combat = char:FindFirstChild("combat")
+    if not combat then return 0 end
+    local mode = combat:FindFirstChild("mode")
+    if mode then
+        return tonumber(mode.Value) or 0
+    end
+    return 0
+end
+
+-- ==================== ESP ====================
+local function createESP(character, player)
+    if player == LocalPlayer or not character then return end
+    if tracked[character] then return end
+
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    pcall(function()
+        local old = root:FindFirstChild("MyESP")
+        if old then old:Destroy() end
+    end)
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "MyESP"
+    billboard.Adornee = root
+    billboard.AlwaysOnTop = true
+    billboard.Size = UDim2.new(0, 170, 0, 95)
+    billboard.StudsOffset = Vector3.new(0, 4, 0)
+    billboard.MaxDistance = 999999
+    billboard.LightInfluence = 0
+    billboard.Enabled = espEnabled
+    billboard.Parent = root
+
+    local frame = Instance.new("Frame")
+    frame.BackgroundTransparency = 1
+    frame.Size = UDim2.new(1,0,1,0)
+    frame.Parent = billboard
+
+    local nameLbl = Instance.new("TextLabel")
+    nameLbl.Size = UDim2.new(1,0,0,24)
+    nameLbl.BackgroundTransparency = 1
+    nameLbl.Text = player.Name
+    nameLbl.TextColor3 = Color3.fromRGB(255, 220, 255)
+    nameLbl.Font = Enum.Font.GothamBold
+    nameLbl.TextSize = 15
+    nameLbl.TextStrokeTransparency = 0
+    nameLbl.Parent = frame
+
+    local hpLbl = Instance.new("TextLabel")
+    hpLbl.Size = UDim2.new(1,0,0,20)
+    hpLbl.Position = UDim2.new(0,0,0,24)
+    hpLbl.BackgroundTransparency = 1
+    hpLbl.Text = "HP: 100"
+    hpLbl.TextColor3 = Color3.fromRGB(80, 255, 80)
+    hpLbl.Font = Enum.Font.Gotham
+    hpLbl.TextSize = 14
+    hpLbl.TextStrokeTransparency = 0
+    hpLbl.Parent = frame
+
+    local distLbl = Instance.new("TextLabel")
+    distLbl.Size = UDim2.new(1,0,0,20)
+    distLbl.Position = UDim2.new(0,0,0,45)
+    distLbl.BackgroundTransparency = 1
+    distLbl.Text = "Dist: 0m"
+    distLbl.TextColor3 = Color3.fromRGB(255, 60, 60)
+    distLbl.Font = Enum.Font.GothamSemibold
+    distLbl.TextSize = 13
+    distLbl.TextStrokeTransparency = 0
+    distLbl.Parent = frame
+
+    local mdLbl = Instance.new("TextLabel")
+    mdLbl.Size = UDim2.new(1,0,0,20)
+    mdLbl.Position = UDim2.new(0,0,0,66)
+    mdLbl.BackgroundTransparency = 1
+    mdLbl.Text = "MD: 0"
+    mdLbl.TextColor3 = Color3.fromRGB(180, 100, 255)
+    mdLbl.Font = Enum.Font.GothamSemibold
+    mdLbl.TextSize = 13
+    mdLbl.TextStrokeTransparency = 0
+    mdLbl.Parent = frame
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        local function updateHP()
+            hpLbl.Text = "HP: " .. math.floor(humanoid.Health)
+        end
+        updateHP()
+        humanoid.HealthChanged:Connect(updateHP)
+    end
+
+    local conn = RunService.Heartbeat:Connect(function()
+        if not billboard.Parent then conn:Disconnect() return end
+        local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if myRoot and root then
+            local dist = (root.Position - myRoot.Position).Magnitude
+            distLbl.Text = string.format("Dist: %.0fm", dist)
+        end
+        mdLbl.Text = "MD: " .. GetMD(player)
+    end)
+
+    tracked[character] = {billboard = billboard, conn = conn}
+end
+
+local function toggleESP()
+    espEnabled = not espEnabled
+    for _, v in pairs(tracked) do
+        if v.billboard then v.billboard.Enabled = espEnabled end
+    end
+    print("ESP:", espEnabled and "ON" or "OFF")
+end
+
+-- ==================== AIMBOT ====================
+local function GetClosestTarget(excludeTarget)
+    local closest = nil
+    local shortestDist = AIMBOT_SETTINGS.FOV   -- Usamos FOV como limite
+    local mousePos = UserInputService:GetMouseLocation()
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer or not player.Character then continue end
+        if excludeTarget and player.Character:FindFirstChild("Head") == excludeTarget then continue end
+
+        local head = player.Character:FindFirstChild("Head")
+        local root = player.Character:FindFirstChild("HumanoidRootPart")
+        if not head or not root then continue end
+
+        local distance = (root.Position - Camera.CFrame.Position).Magnitude
+        if distance > AIMBOT_SETTINGS.MaxDistance then continue end
+
+        local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+        if not onScreen then continue end
+
+        local fovDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+        if fovDist < shortestDist then
+            shortestDist = fovDist
+            closest = head
+        end
+    end
+    return closest
+end
+
+local aimbotConnection = nil
+
+local function StartAimbot()
+    if aimbotConnection then return end
+
+    aimbotConnection = RunService.RenderStepped:Connect(function()
+        if not aimbotEnabled or not currentTarget then return end
+
+        -- Verifica se o alvo ainda existe
+        if not currentTarget.Parent or not currentTarget.Parent:FindFirstChild("HumanoidRootPart") then
+            currentTarget = nil
+            return
+        end
+
+        local targetPos = currentTarget.Position
+
+        -- Predição
+        local root = currentTarget.Parent:FindFirstChild("HumanoidRootPart")
+        if root then
+            targetPos = targetPos + (root.Velocity * AIMBOT_SETTINGS.Prediction)
+        end
+
+        local currentCFrame = Camera.CFrame
+        local desiredCFrame = CFrame.new(currentCFrame.Position, targetPos)
+        Camera.CFrame = currentCFrame:Lerp(desiredCFrame, AIMBOT_SETTINGS.Smoothness)
+    end)
+end
+
+local function StopAimbot()
+    if aimbotConnection then
+        aimbotConnection:Disconnect()
+        aimbotConnection = nil
+    end
+    currentTarget = nil
+end
+
+local function ToggleAimbot()
+    if not aimbotEnabled then
+        -- Liga o aimbot e trava no alvo mais próximo
+        aimbotEnabled = true
+        currentTarget = GetClosestTarget()
+        if currentTarget then
+            StartAimbot()
+            print("Aimbot: ON | Travado em:", currentTarget.Parent.Name)
+        else
+            print("Aimbot: ON | Nenhum alvo encontrado")
+        end
+    else
+        -- Já está ligado → troca de alvo
+        local newTarget = GetClosestTarget(currentTarget)  -- exclui o atual
+        if newTarget then
+            currentTarget = newTarget
+            print("Aimbot: Trocado para:", newTarget.Parent.Name)
+        else
+            -- Se não tiver mais alvo, desliga
+            StopAimbot()
+            aimbotEnabled = false
+            print("Aimbot: OFF | Nenhum outro alvo")
+        end
+    end
+end
+
+-- ==================== SETUP ====================
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr ~= LocalPlayer then
+        if plr.Character then createESP(plr.Character, plr) end
+        plr.CharacterAdded:Connect(function(c)
+            task.wait(0.8)
+            createESP(c, plr)
+        end)
+    end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    if plr == LocalPlayer then return end
+    plr.CharacterAdded:Connect(function(c)
+        task.wait(0.8)
+        createESP(c, plr)
+    end)
+end)
+
+-- Teclas
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.U then
+        toggleESP()
+    elseif input.KeyCode == AIMBOT_SETTINGS.ToggleKey then
+        ToggleAimbot()
+    end
+end)
+
+print("✅ Script carregado - ESP + Aimbot com Lock")
+print("U = Toggle ESP")
+print("K = Ligar / Trocar alvo do Aimbot")
