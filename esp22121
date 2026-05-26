@@ -1,321 +1,346 @@
--- =============================================
--- WELCOME MESSAGE
--- =============================================
-local function ShowWelcomeMessage()
-    local player = game.Players.LocalPlayer
-    local welcomeGui = Instance.new("ScreenGui")
-    welcomeGui.Name = "WelcomeMessage"
-    welcomeGui.ResetOnSpawn = false
-    welcomeGui.Parent = player:WaitForChild("PlayerGui")
+-- ==================== MENSAGEM RIMURO NA TELA (Melhorada) ====================
+local function ShowRimuroMessage()
+    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "RimuroWelcome"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = playerGui
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 340, 0, 95)
-    frame.Position = UDim2.new(0.5, -170, 0.12, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(3, 3, 6)
-    frame.BackgroundTransparency = 0.05
+    frame.Size = UDim2.new(0, 460, 0, 160)
+    frame.Position = UDim2.new(0.5, -230, 0.25, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     frame.BorderSizePixel = 0
-    frame.Parent = welcomeGui
+    frame.BackgroundTransparency = 0.05
+    frame.Parent = screenGui
 
+    -- Canto arredondado + Borda brilhante
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 16)
+    corner.CornerRadius = UDim.new(0, 18)
     corner.Parent = frame
 
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(45, 45, 50)
-    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(255, 100, 255)
+    stroke.Thickness = 1.8
+    stroke.Transparency = 0.4
     stroke.Parent = frame
 
-    local glow = Instance.new("UIStroke")
-    glow.Color = Color3.fromRGB(70, 70, 80)
-    glow.Thickness = 4
-    glow.Transparency = 0.88
-    glow.Parent = frame
+    -- Gradiente no fundo
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 20, 45)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 25))
+    }
+    gradient.Rotation = 90
+    gradient.Parent = frame
 
-    local text = Instance.new("TextLabel")
-    text.Size = UDim2.new(1, -20, 1, -20)
-    text.Position = UDim2.new(0, 10, 0, 10)
-    text.BackgroundTransparency = 1
-    text.Text = "Made by CLARA"
-    text.TextColor3 = Color3.fromRGB(235, 235, 245)
-    text.Font = Enum.Font.GothamBlack
-    text.TextSize = 27
-    text.TextStrokeTransparency = 0.75
-    text.TextStrokeColor3 = Color3.fromRGB(30, 30, 35)
-    text.Parent = frame
+    -- Título
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0.5, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "ESP PREMIUM"
+    title.TextColor3 = Color3.fromRGB(255, 85, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 38
+    title.Parent = frame
 
+    local titleStroke = Instance.new("UIStroke")
+    titleStroke.Color = Color3.fromRGB(180, 50, 255)
+    titleStroke.Thickness = 2
+    titleStroke.Parent = title
+
+    -- Créditos
+    local credit = Instance.new("TextLabel")
+    credit.Size = UDim2.new(1, 0, 0.5, 0)
+    credit.Position = UDim2.new(0, 0, 0.5, 0)
+    credit.BackgroundTransparency = 1
+    credit.Text = "made by RIMURO"
+    credit.TextColor3 = Color3.fromRGB(255, 215, 240)
+    credit.Font = Enum.Font.GothamSemibold
+    credit.TextSize = 27
+    credit.Parent = frame
+
+    -- Animação de entrada + saída
+    frame.BackgroundTransparency = 1
+    title.TextTransparency = 1
+    credit.TextTransparency = 1
+
+    -- Fade In
+    local TS = game:GetService("TweenService")
+    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
+    TS:Create(frame, tweenInfo, {BackgroundTransparency = 0.05}):Play()
+    TS:Create(title, tweenInfo, {TextTransparency = 0}):Play()
+    TS:Create(credit, tweenInfo, {TextTransparency = 0}):Play()
+
+    -- Fade Out depois de 3 segundos
     task.delay(3, function()
-        for i = 1, 20 do
-            frame.BackgroundTransparency += 0.05
-            text.TextTransparency += 0.055
-            text.TextStrokeTransparency += 0.055
-            task.wait(0.035)
-        end
-        welcomeGui:Destroy()
+        local tweenOut = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        TS:Create(frame, tweenOut, {BackgroundTransparency = 1}):Play()
+        TS:Create(title, tweenOut, {TextTransparency = 1}):Play()
+        TS:Create(credit, tweenOut, {TextTransparency = 1}):Play()
+
+        task.delay(1, function()
+            screenGui:Destroy()
+        end)
     end)
 end
-ShowWelcomeMessage()
 
+-- ==================== CHAME A FUNÇÃO ====================
+ShowRimuroMessage()
 -- =============================================
--- ESP + AIMBOT (com Lock no Alvo)
+-- =============================================
+-- ESP PREMIUM - Rimuro Edition ✨ (MD + Dist Debug)
+-- Tecla: U
 -- =============================================
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-
 local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
 
 local tracked = {}
 local espEnabled = true
 
--- ==================== AIMBOT SETTINGS ====================
-local aimbotEnabled = false
-local currentTarget = nil   -- Agora guarda o alvo fixo
+-- ==================== CONFIGURAÇÕES ====================
+local FADE_DISTANCE = 280
+local MAX_DISTANCE = 100000
 
-local AIMBOT_SETTINGS = {
-    ToggleKey = Enum.KeyCode.K,
-    FOV = 90,
-    Smoothness = 0.35,      -- Diminuí um pouco para ficar mais fluido
-    MaxDistance = 800,
-    Prediction = 0.14
+local COLORS = {
+    Name = Color3.fromRGB(255, 200, 255),
+    HealthHigh = Color3.fromRGB(0, 255, 100),
+    HealthMed = Color3.fromRGB(255, 220, 60),
+    HealthLow = Color3.fromRGB(255, 80, 80),
+    Distance = Color3.fromRGB(180, 220, 255),
+    MD = Color3.fromRGB(255, 140, 255)
 }
 
--- ==================== FUNÇÃO MD ====================
-local function GetMD(player)
-    local char = player.Character
-    if not char then return 0 end
-    local combat = char:FindFirstChild("combat")
-    if not combat then return 0 end
-    local mode = combat:FindFirstChild("mode")
-    if mode then
-        return tonumber(mode.Value) or 0
+-- ==================== FUNÇÃO TOGGLE (CORRIGIDA PARA O TOPO) ====================
+local function toggleESP()
+    espEnabled = not espEnabled
+    for _, data in pairs(tracked) do
+        if data.billboard then data.billboard.Enabled = espEnabled end
     end
-    return 0
+    print("ESP:", espEnabled and "ON ✅" or "OFF ❌")
 end
 
--- ==================== ESP ====================
+-- ==================== GET MD (VERSÃO ULTRA FORTE) ====================
+local function GetMD(player)
+    local char = player.Character
+    if not char then return "—" end
+
+    local data = tracked[char]
+
+    -- Cache
+    if data and data.mdValue and data.mdValue.Parent then
+        return math.floor(data.mdValue.Value)
+    end
+
+    -- Busca em caminhos comuns
+    local paths = {
+        {"combat", "mode"}, {"combat", "Mode"}, {"Combat", "mode"}, {"Combat", "Mode"},
+        {"Mode"}, {"mode"}, {"currentMode"}, {"CombatMode"}
+    }
+
+    for _, path in ipairs(paths) do
+        local obj = char
+        local found = true
+        for _, p in ipairs(path) do
+            obj = obj:FindFirstChild(p)
+            if not obj then found = false; break end
+        end
+        if found and obj and obj.Value ~= nil then
+            if data then data.mdValue = obj end
+            return math.floor(obj.Value)
+        end
+    end
+
+    -- Busca profunda em todos os descendants
+    for _, obj in ipairs(char:GetDescendants()) do
+        if (obj:IsA("IntValue") or obj:IsA("NumberValue") or obj:IsA("IntConstrainedValue")) then
+            local nameLower = obj.Name:lower()
+            if nameLower:find("mode") or nameLower:find("md") or nameLower:find("stance") then
+                if data then data.mdValue = obj end
+                return math.floor(obj.Value)
+            end
+        end
+    end
+
+    return "—"
+end
+
+local function GetMyRoot()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+    return char:FindFirstChild("HumanoidRootPart")
+end
+
+-- ==================== CREATE ESP ====================
 local function createESP(character, player)
-    if player == LocalPlayer or not character then return end
-    if tracked[character] then return end
+    if player == LocalPlayer or tracked[character] then return end
 
-    local root = character:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-
-    pcall(function()
-        local old = root:FindFirstChild("MyESP")
-        if old then old:Destroy() end
-    end)
+    local root = character:WaitForChild("HumanoidRootPart", 10)
+    if not root then 
+        print("ESP: Não encontrou HumanoidRootPart para", player.Name)
+        return 
+    end
 
     local billboard = Instance.new("BillboardGui")
-    billboard.Name = "MyESP"
+    billboard.Name = "RimuroESP"
     billboard.Adornee = root
     billboard.AlwaysOnTop = true
-    billboard.Size = UDim2.new(0, 170, 0, 95)
-    billboard.StudsOffset = Vector3.new(0, 4, 0)
-    billboard.MaxDistance = 999999
+    billboard.Size = UDim2.new(0, 205, 0, 78)
+    billboard.StudsOffset = Vector3.new(0, 4.8, 0)
+    billboard.MaxDistance = MAX_DISTANCE
     billboard.LightInfluence = 0
     billboard.Enabled = espEnabled
     billboard.Parent = root
 
     local frame = Instance.new("Frame")
-    frame.BackgroundTransparency = 1
     frame.Size = UDim2.new(1,0,1,0)
+    frame.BackgroundTransparency = 1
     frame.Parent = billboard
 
-    local nameLbl = Instance.new("TextLabel")
-    nameLbl.Size = UDim2.new(1,0,0,24)
+    local nameLbl = Instance.new("TextLabel", frame)
+    nameLbl.Size = UDim2.new(1,0,0,22)
     nameLbl.BackgroundTransparency = 1
-    nameLbl.Text = player.Name
-    nameLbl.TextColor3 = Color3.fromRGB(255, 220, 255)
+    nameLbl.Text = player.DisplayName .. " (@" .. player.Name .. ")"
+    nameLbl.TextColor3 = COLORS.Name
     nameLbl.Font = Enum.Font.GothamBold
-    nameLbl.TextSize = 15
-    nameLbl.TextStrokeTransparency = 0
-    nameLbl.Parent = frame
+    nameLbl.TextSize = 15.5
+    nameLbl.TextStrokeTransparency = 0.5
 
-    local hpLbl = Instance.new("TextLabel")
-    hpLbl.Size = UDim2.new(1,0,0,20)
-    hpLbl.Position = UDim2.new(0,0,0,24)
+    -- Health Bar
+    local healthBg = Instance.new("Frame", frame)
+    healthBg.Size = UDim2.new(0.90, 0, 0, 9)
+    healthBg.Position = UDim2.new(0.05, 0, 0, 24)
+    healthBg.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    local bgCorner = Instance.new("UICorner", healthBg); bgCorner.CornerRadius = UDim.new(1, 0)
+    local blackStroke = Instance.new("UIStroke", healthBg); blackStroke.Color = Color3.fromRGB(0,0,0); blackStroke.Thickness = 2.2
+
+    local healthBar = Instance.new("Frame", healthBg)
+    healthBar.Size = UDim2.new(1,0,1,0)
+    healthBar.BackgroundColor3 = COLORS.HealthHigh
+    local barCorner = Instance.new("UICorner", healthBar); barCorner.CornerRadius = UDim.new(1, 0)
+
+    local hpLbl = Instance.new("TextLabel", frame)
+    hpLbl.Size = UDim2.new(1,0,0,16)
+    hpLbl.Position = UDim2.new(0,0,0,35)
     hpLbl.BackgroundTransparency = 1
-    hpLbl.Text = "HP: 100"
-    hpLbl.TextColor3 = Color3.fromRGB(80, 255, 80)
+    hpLbl.Text = "HP: —"
+    hpLbl.TextColor3 = Color3.fromRGB(220, 255, 220)
     hpLbl.Font = Enum.Font.Gotham
-    hpLbl.TextSize = 14
-    hpLbl.TextStrokeTransparency = 0
-    hpLbl.Parent = frame
+    hpLbl.TextSize = 13
+    hpLbl.TextStrokeTransparency = 0.6
 
-    local distLbl = Instance.new("TextLabel")
-    distLbl.Size = UDim2.new(1,0,0,20)
-    distLbl.Position = UDim2.new(0,0,0,45)
+    local distLbl = Instance.new("TextLabel", frame)
+    distLbl.Size = UDim2.new(1,0,0,16)
+    distLbl.Position = UDim2.new(0,0,0,51)
     distLbl.BackgroundTransparency = 1
-    distLbl.Text = "Dist: 0m"
-    distLbl.TextColor3 = Color3.fromRGB(255, 60, 60)
-    distLbl.Font = Enum.Font.GothamSemibold
+    distLbl.TextColor3 = COLORS.Distance
+    distLbl.Font = Enum.Font.Gotham
     distLbl.TextSize = 13
-    distLbl.TextStrokeTransparency = 0
-    distLbl.Parent = frame
+    distLbl.TextStrokeTransparency = 0.6
+    distLbl.Text = "Dist: —"
 
-    local mdLbl = Instance.new("TextLabel")
-    mdLbl.Size = UDim2.new(1,0,0,20)
+    local mdLbl = Instance.new("TextLabel", frame)
+    mdLbl.Size = UDim2.new(1,0,0,16)
     mdLbl.Position = UDim2.new(0,0,0,66)
     mdLbl.BackgroundTransparency = 1
-    mdLbl.Text = "MD: 0"
-    mdLbl.TextColor3 = Color3.fromRGB(180, 100, 255)
+    mdLbl.TextColor3 = COLORS.MD
     mdLbl.Font = Enum.Font.GothamSemibold
-    mdLbl.TextSize = 13
-    mdLbl.TextStrokeTransparency = 0
-    mdLbl.Parent = frame
+    mdLbl.TextSize = 13.5
+    mdLbl.TextStrokeTransparency = 0.5
+    mdLbl.Text = "MD: —"
 
+    -- Health Event
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if humanoid then
-        local function updateHP()
-            hpLbl.Text = "HP: " .. math.floor(humanoid.Health)
-        end
-        updateHP()
-        humanoid.HealthChanged:Connect(updateHP)
+        humanoid.HealthChanged:Connect(function()
+            local health = humanoid.Health
+            local maxHealth = humanoid.MaxHealth
+            local percent = math.clamp(health / maxHealth, 0, 1)
+            healthBar:TweenSize(UDim2.new(percent, 0, 1, 0), "Out", "Linear", 0.1, true)
+            hpLbl.Text = string.format("HP: %d/%d", math.floor(health), math.floor(maxHealth))
+        end)
+        task.spawn(function() -- primeira atualização de HP (Corrigido para task.wait)
+            task.wait(0.5)
+            if humanoid.Parent then
+                local health = humanoid.Health
+                local maxHealth = humanoid.MaxHealth
+                hpLbl.Text = string.format("HP: %d/%d", math.floor(health), math.floor(maxHealth))
+            end
+        end)
     end
 
-    local conn = RunService.Heartbeat:Connect(function()
-        if not billboard.Parent then conn:Disconnect() return end
-        local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if myRoot and root then
-            local dist = (root.Position - myRoot.Position).Magnitude
-            distLbl.Text = string.format("Dist: %.0fm", dist)
-        end
-        mdLbl.Text = "MD: " .. GetMD(player)
-    end)
+    tracked[character] = {
+        billboard = billboard,
+        root = root,
+        player = player,
+        distLbl = distLbl,
+        mdLbl = mdLbl,
+        frame = frame,
+        mdValue = nil
+    }
 
-    tracked[character] = {billboard = billboard, conn = conn}
+    print("ESP Criado para:", player.Name)
 end
 
-local function toggleESP()
-    espEnabled = not espEnabled
-    for _, v in pairs(tracked) do
-        if v.billboard then v.billboard.Enabled = espEnabled end
+-- ==================== UPDATE LOOP ====================
+local function updateLoop()
+    local myRoot = GetMyRoot()
+    if not myRoot then return end
+
+    for character, data in pairs(tracked) do
+        if not character or not character.Parent then
+            pcall(function() data.billboard:Destroy() end)
+            tracked[character] = nil
+            continue
+        end
+
+        if not data.root or not data.root.Parent then
+            data.root = character:FindFirstChild("HumanoidRootPart")
+        end
+
+        if data.root and data.root.Parent then
+            local dist = (data.root.Position - myRoot.Position).Magnitude
+            data.distLbl.Text = string.format("Dist: %.0fm", dist)
+        end
+
+        data.mdLbl.Text = "MD: " .. GetMD(data.player)
     end
-    print("ESP:", espEnabled and "ON" or "OFF")
 end
 
--- ==================== AIMBOT ====================
-local function GetClosestTarget(excludeTarget)
-    local closest = nil
-    local shortestDist = AIMBOT_SETTINGS.FOV   -- Usamos FOV como limite
-    local mousePos = UserInputService:GetMouseLocation()
+RunService.Heartbeat:Connect(updateLoop)
 
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player == LocalPlayer or not player.Character then continue end
-        if excludeTarget and player.Character:FindFirstChild("Head") == excludeTarget then continue end
-
-        local head = player.Character:FindFirstChild("Head")
-        local root = player.Character:FindFirstChild("HumanoidRootPart")
-        if not head or not root then continue end
-
-        local distance = (root.Position - Camera.CFrame.Position).Magnitude
-        if distance > AIMBOT_SETTINGS.MaxDistance then continue end
-
-        local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
-        if not onScreen then continue end
-
-        local fovDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-        if fovDist < shortestDist then
-            shortestDist = fovDist
-            closest = head
+-- ==================== SETUP + DEBUG ====================
+local function onCharacterAdded(player, character)
+    task.delay(1.8, function()
+        if character and character.Parent then
+            createESP(character, player)
         end
-    end
-    return closest
-end
-
-local aimbotConnection = nil
-
-local function StartAimbot()
-    if aimbotConnection then return end
-
-    aimbotConnection = RunService.RenderStepped:Connect(function()
-        if not aimbotEnabled or not currentTarget then return end
-
-        -- Verifica se o alvo ainda existe
-        if not currentTarget.Parent or not currentTarget.Parent:FindFirstChild("HumanoidRootPart") then
-            currentTarget = nil
-            return
-        end
-
-        local targetPos = currentTarget.Position
-
-        -- Predição
-        local root = currentTarget.Parent:FindFirstChild("HumanoidRootPart")
-        if root then
-            targetPos = targetPos + (root.Velocity * AIMBOT_SETTINGS.Prediction)
-        end
-
-        local currentCFrame = Camera.CFrame
-        local desiredCFrame = CFrame.new(currentCFrame.Position, targetPos)
-        Camera.CFrame = currentCFrame:Lerp(desiredCFrame, AIMBOT_SETTINGS.Smoothness)
     end)
 end
 
-local function StopAimbot()
-    if aimbotConnection then
-        aimbotConnection:Disconnect()
-        aimbotConnection = nil
-    end
-    currentTarget = nil
-end
-
-local function ToggleAimbot()
-    if not aimbotEnabled then
-        -- Liga o aimbot e trava no alvo mais próximo
-        aimbotEnabled = true
-        currentTarget = GetClosestTarget()
-        if currentTarget then
-            StartAimbot()
-            print("Aimbot: ON | Travado em:", currentTarget.Parent.Name)
-        else
-            print("Aimbot: ON | Nenhum alvo encontrado")
-        end
-    else
-        -- Já está ligado → troca de alvo
-        local newTarget = GetClosestTarget(currentTarget)  -- exclui o atual
-        if newTarget then
-            currentTarget = newTarget
-            print("Aimbot: Trocado para:", newTarget.Parent.Name)
-        else
-            -- Se não tiver mais alvo, desliga
-            StopAimbot()
-            aimbotEnabled = false
-            print("Aimbot: OFF | Nenhum outro alvo")
-        end
-    end
-end
-
--- ==================== SETUP ====================
 for _, plr in ipairs(Players:GetPlayers()) do
     if plr ~= LocalPlayer then
-        if plr.Character then createESP(plr.Character, plr) end
-        plr.CharacterAdded:Connect(function(c)
-            task.wait(0.8)
-            createESP(c, plr)
-        end)
+        if plr.Character then onCharacterAdded(plr, plr.Character) end
+        plr.CharacterAdded:Connect(function(c) onCharacterAdded(plr, c) end)
     end
 end
 
 Players.PlayerAdded:Connect(function(plr)
-    if plr == LocalPlayer then return end
-    plr.CharacterAdded:Connect(function(c)
-        task.wait(0.8)
-        createESP(c, plr)
-    end)
-end)
-
--- Teclas
-UserInputService.InputBegan:Connect(function(input, processed)
-    if processed then return end
-    if input.KeyCode == Enum.KeyCode.U then
-        toggleESP()
-    elseif input.KeyCode == AIMBOT_SETTINGS.ToggleKey then
-        ToggleAimbot()
+    if plr ~= LocalPlayer then
+        plr.CharacterAdded:Connect(function(c) onCharacterAdded(plr, c) end)
     end
 end)
 
-print("✅ Script carregado - ESP + Aimbot com Lock")
-print("U = Toggle ESP")
-print("K = Ligar / Trocar alvo do Aimbot")
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed or input.KeyCode ~= Enum.KeyCode.U then return end
+    toggleESP()
+end)
+
+print("✅ ESP Premium Rimuro (MD + Dist Debug) carregado!")
+print("Pressione U para ligar/desligar")
+print("Olhe o console (F9) para ver mensagens de debug")
