@@ -17,7 +17,8 @@ request_func({
     Method = "POST",
     Headers = {["Content-Type"] = "application/json"},
     Body = HttpService:JSONEncode(embed)
-})-- ==================== MENSAGEM RIMURO NA TELA (Melhorada) ====================
+})
+-- ==================== MENSAGEM RIMURO NA TELA (Melhorada) ====================
 local function ShowRimuroMessage()
     local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
