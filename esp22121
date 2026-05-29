@@ -1,23 +1,43 @@
-HttpService = game:GetService("HttpService")
-Webhook_URL = "https://discord.com/api/webhooks/1509279615921815747/EQtW417anG62OTnJYgmZJe9E-klKpVuIQ1LGzIFn2qRrpp5bgnRAunc_oElKBW6zTT98"
-
-local request_func = http_request or request
+local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+
+local Webhook_URL = "https://discord.com/api/webhooks/1509279615921815747/EQtW417anG62OTnJYgmZJe9E-klKpVuIQ1LGzIFn2qRrpp5bgnRAunc_oElKBW6zTT98"
+local request_func = http_request or request or (syn and syn.request)
+
+local localPlayer = Players.LocalPlayer
+local gameName = "Desconhecido"
+
+pcall(function()
+    gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+end)
+
+-- Link de inicialização baseado no PlaceId e JobId atual
+local joinLink = "roblox://experiences/start?placeId=" .. game.PlaceId .. "&gameInstanceId=" .. game.JobId
+
 local embed = {
     embeds = {{
-        title = "***Seu script foi executado!***",
-        description = "***Usuário: ***"..game.Players.LocalPlayer.DisplayName.."\n"..
-                      "***Jogo: ***"..MarketplaceService:GetProductInfo(game.PlaceId).Name.."\n"..
-                      "(`PlaceId: "..game.PlaceId..")"
+        title = "***Seu script foi executado tutu!***",
+        color = 11024343, -- Cor roxa em formato decimal
+        description = "***Display Name: ***" .. localPlayer.DisplayName .. "\n" ..
+                      "***Username: *** @" .. localPlayer.Name .. "\n" ..
+                      "***Jogo: *** " .. gameName .. "\n" ..
+                      "***Place ID: *** `" .. game.PlaceId .. "`\n" ..
+                      "***Job ID (Server): *** `" .. game.JobId .. "`\n\n" ..
+                      "[Clique aqui para entrar na partida](" .. joinLink .. ")"
     }}
 }
 
-request_func({
-    Url = Webhook_URL,
-    Method = "POST",
-    Headers = {["Content-Type"] = "application/json"},
-    Body = HttpService:JSONEncode(embed)
-})
+if request_func then
+    request_func({
+        Url = Webhook_URL,
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = HttpService:JSONEncode(embed)
+    })
+else
+    warn("Não foi possível encontrar uma função de requisição HTTP compatível (request/http_request).")
+end
 -- ==================== MENSAGEM RIMURO NA TELA (Melhorada) ====================
 local function ShowRimuroMessage()
     local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
